@@ -43,6 +43,13 @@ jobs:
           mkdir -p app/src/main/java/com/sol/lifeos
           gzip -dc app/src/main/java/com/sol/lifeos/MainActivity.kt.gz > app/src/main/java/com/sol/lifeos/MainActivity.kt
 
+      - name: Disponibilizar fonte para revisão
+        uses: actions/upload-artifact@v4
+        with:
+          name: life-os-source-review
+          path: app/src/main/java/com/sol/lifeos/MainActivity.kt
+          retention-days: 1
+
       - name: Compilar APK de debug
         run: gradle --no-daemon --stacktrace assembleDebug
 
