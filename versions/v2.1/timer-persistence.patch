@@ -1,0 +1,83 @@
+--- a/app/src/main/java/com/sol/lifeos/MainActivity.kt
++++ b/app/src/main/java/com/sol/lifeos/MainActivity.kt
+@@ -93,7 +93,7 @@
+ private data class Achievement(val id: String, val icon: String, val title: String, val description: String)
+ private data class Reward(val id: String, val icon: String, val name: String, val description: String, val cost: Int)
+ private data class WeekStats(val start: LocalDate, val end: LocalDate, val tasks: Int, val xp: Int, val days: Int)
+-private data class TimerSnapshot(val endAt: Long, val durationSeconds: Int, val label: String, val running: Boolean)
++private data class TimerSnapshot(val endAt: Long, val durationSeconds: Int, val label: String, val running: Boolean, val remainingSeconds: Int)
+ private data class TimerSession(val label: String, val minutes: Int, val date: Long)
+ 
+ private val SleepTimes = listOf("00:30", "00:15", "00:00", "23:45", "23:30")
+@@ -295,9 +295,22 @@
+     fun deleteReward(id: String) { val old = rewards().filterNot { it.id == id }; val arr = JSONArray(); old.forEach { arr.put(rewardJson(it)) }; data.put("rewards", arr); persist() }
+     fun redeem(id: String): Boolean { val reward = rewards().firstOrNull { it.id == id } ?: return false; if (availableXP() < reward.cost) return false; data.put("spent", spentXP() + reward.cost); data.optJSONArray("redemptions")?.put(rewardJson(reward).put("date", System.currentTimeMillis())); persist(); return true }
+     fun redemptionHistory(): List<Reward> { val a = data.optJSONArray("redemptions") ?: JSONArray(); return (0 until a.length()).mapNotNull { i -> a.optJSONObject(i)?.toReward() } .reversed() }
+-    fun timerSnapshot(): TimerSnapshot? { val o = data.optJSONObject("timer") ?: return null; if (!o.optBoolean("running")) return null; return TimerSnapshot(o.optLong("endAt"), o.optInt("duration"), o.optString("label", "Foco"), true) }
+-    fun saveTimer(endAt: Long, duration: Int, label: String) { data.put("timer", JSONObject().put("endAt", endAt).put("duration", duration).put("label", label).put("running", true)); persist() }
+-    fun clearTimer() { data.put("timer", JSONObject().put("running", false)); persist() }
++    fun timerSnapshot(): TimerSnapshot? {
++        val o = data.optJSONObject("timer") ?: return null
++        val duration = o.optInt("duration", 20 * 60).coerceAtLeast(60)
++        val running = o.optBoolean("running")
++        val endAt = o.optLong("endAt", 0L)
++        val remaining = if (running) ((endAt - System.currentTimeMillis()) / 1000).toInt().coerceAtLeast(0)
++            else o.optInt("remaining", duration).coerceIn(0, duration)
++        return TimerSnapshot(endAt, duration, o.optString("label", "Estudo"), running, remaining)
++    }
++    fun saveTimer(endAt: Long, duration: Int, label: String) {
++        data.put("timer", JSONObject().put("endAt", endAt).put("duration", duration).put("label", label).put("running", true).put("remaining", 0)); persist()
++    }
++    fun savePausedTimer(remaining: Int, duration: Int, label: String) {
++        data.put("timer", JSONObject().put("duration", duration).put("label", label).put("running", false).put("remaining", remaining.coerceIn(0, duration))); persist()
++    }
++    fun clearTimer() { savePausedTimer(20 * 60, 20 * 60, "Estudo") }
+     fun recordSession(label: String, minutes: Int) { data.optJSONArray("sessions")?.put(JSONObject().put("label", label).put("minutes", minutes).put("date", System.currentTimeMillis())); clearTimer() }
+     fun sessions(): List<TimerSession> { val a = data.optJSONArray("sessions") ?: JSONArray(); return (0 until a.length()).mapNotNull { i -> a.optJSONObject(i)?.let { TimerSession(it.optString("label"), it.optInt("minutes"), it.optLong("date")) } }.reversed() }
+     fun sessionMinutes() = sessions().sumOf { it.minutes }
+@@ -786,7 +799,7 @@
+     var duration by remember { mutableIntStateOf(saved?.durationSeconds ?: 20*60) }
+     var endAt by remember { mutableLongStateOf(saved?.endAt ?: 0L) }
+     var running by remember { mutableStateOf(saved?.running ?: false) }
+-    var remaining by remember { mutableIntStateOf(if (saved != null) ((saved.endAt-System.currentTimeMillis())/1000).toInt().coerceAtLeast(0) else 20*60) }
++    var remaining by remember { mutableIntStateOf(saved?.remainingSeconds ?: 20*60) }
+     var custom by remember { mutableStateOf("15") }
+     LaunchedEffect(running, endAt) {
+         if (running) {
+@@ -803,7 +816,7 @@
+             }
+         }
+     }
+-    fun choose(minutes: Int, name: String) { running = false; label = name; duration = minutes*60; remaining = duration; endAt = 0; store.clearTimer() }
++    fun choose(minutes: Int, name: String) { running = false; label = name; duration = minutes*60; remaining = duration; endAt = 0; store.savePausedTimer(remaining, duration, label) }
+     ScreenColumn {
+         PageTitle("Temporizador", "Blocos curtos para estudar ou cuidar da casa. Encerrar no tempo combinado também é vitória.")
+         AppPanel {
+@@ -823,15 +836,23 @@
+             }
+             Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.fillMaxWidth()) {
+                 Button(onClick = {
+-                    if (running) { remaining = ((endAt-System.currentTimeMillis())/1000).toInt().coerceAtLeast(0); running = false; store.clearTimer() }
+-                    else { if (remaining <= 0) remaining = duration; endAt = System.currentTimeMillis()+remaining*1000L; running = true; store.saveTimer(endAt, duration, label) }
++                    if (running) {
++                        remaining = ((endAt-System.currentTimeMillis())/1000).toInt().coerceAtLeast(0)
++                        running = false
++                        store.savePausedTimer(remaining, duration, label)
++                    } else {
++                        if (remaining <= 0) remaining = duration
++                        endAt = System.currentTimeMillis()+remaining*1000L
++                        running = true
++                        store.saveTimer(endAt, duration, label)
++                    }
+                 }, modifier = Modifier.weight(1f), contentPadding = PaddingValues(vertical = 10.dp)) {
+                     Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                         Icon(if (running) Icons.Outlined.Pause else Icons.Outlined.PlayArrow, contentDescription = null, modifier = Modifier.size(17.dp))
+                         Text(if (running) "Pausar" else "Iniciar")
+                     }
+                 }
+-                OutlinedButton(onClick = { running = false; endAt = 0; remaining = duration; store.clearTimer() }, modifier = Modifier.weight(1f), contentPadding = PaddingValues(vertical = 10.dp)) {
++                OutlinedButton(onClick = { running = false; endAt = 0; remaining = duration; store.savePausedTimer(remaining, duration, label) }, modifier = Modifier.weight(1f), contentPadding = PaddingValues(vertical = 10.dp)) {
+                     Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                         Icon(Icons.Outlined.RestartAlt, contentDescription = null, modifier = Modifier.size(16.dp))
+                         Text("Reiniciar")
+                     }

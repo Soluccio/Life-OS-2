@@ -9,3 +9,5 @@ Snapshot da atualização visual e funcional 2.1 da linha Android v2.
 - Mantém missões, calendário, histórico, conquistas, skills e recompensas.
 
 O projeto de build ativo está na raiz do repositório; o projeto integral da linha v2 está em `versions/v2/`.
+
+Correção adicional: o temporizador salva o tempo restante ao pausar e restaura a sessão quando o aplicativo é reaberto. O patch versionado fica em `timer-persistence.patch` e é aplicado no workflow antes da compilação.

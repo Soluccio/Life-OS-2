@@ -52,6 +52,11 @@ jobs:
           test -s app/src/main/java/com/sol/lifeos/MainActivity.kt
           grep -q "class MainActivity" app/src/main/java/com/sol/lifeos/MainActivity.kt
 
+      - name: Aplicar correção do temporizador pausado
+        run: |
+          patch -p1 < versions/v2.1/timer-persistence.patch
+          grep -q "savePausedTimer" app/src/main/java/com/sol/lifeos/MainActivity.kt
+
       - name: Compilar APK de debug
         run: gradle --no-daemon --stacktrace assembleDebug
 
