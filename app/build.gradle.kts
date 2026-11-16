@@ -12,8 +12,8 @@ android {
         applicationId = "com.sol.lifeos"
         minSdk = 26
         targetSdk = 34
-        versionCode = 3
-        versionName = "2.1"
+        versionCode = 4
+        versionName = "2.2"
     }
 
     buildFeatures { compose = true }

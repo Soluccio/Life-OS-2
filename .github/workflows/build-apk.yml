@@ -5,18 +5,19 @@ on:
   push:
     branches:
       - main
+      - v2.2-staging
 
 permissions:
   contents: read
 
 jobs:
   build:
-    name: Compile Android APK
+    name: Compile Android APK v2.2
     runs-on: ubuntu-latest
-    timeout-minutes: 35
+    timeout-minutes: 40
 
     steps:
-      - name: Baixar o código
+      - name: Checkout
         uses: actions/checkout@v6
 
       - name: Preparar Java 17
@@ -28,7 +29,6 @@ jobs:
       - name: Preparar Android SDK
         uses: android-actions/setup-android@v4
 
-      # Mantém a assinatura de debug estável entre compilações futuras.
       - name: Restaurar chave de assinatura de debug
         uses: actions/cache@v4
         with:
@@ -45,32 +45,37 @@ jobs:
         with:
           gradle-version: '8.11.1'
 
-      - name: Descompactar e validar o código Kotlin
+      - name: Reconstruir fonte Kotlin v2.2
+        shell: bash
         run: |
-          mkdir -p app/src/main/java/com/sol/lifeos
+          set -euo pipefail
+          mkdir -p /tmp/life-os-v2.2
+          cat versions/v2.2/payload-b64/part-*.b64 | tr -d '\r\n ' | base64 --decode > /tmp/life-os-v2.2/source-bundle.zip
+          unzip -t /tmp/life-os-v2.2/source-bundle.zip
+          unzip -o /tmp/life-os-v2.2/source-bundle.zip -d .
           gzip -dc app/src/main/java/com/sol/lifeos/MainActivity.kt.gz > app/src/main/java/com/sol/lifeos/MainActivity.kt
           test -s app/src/main/java/com/sol/lifeos/MainActivity.kt
-          grep -q "class MainActivity" app/src/main/java/com/sol/lifeos/MainActivity.kt
-
-      - name: Aplicar correção do temporizador pausado
-        run: |
-          patch -p1 < versions/v2.1/timer-persistence.patch
+          test -s app/src/main/java/com/sol/lifeos/AlarmScheduling.kt
+          grep -q "customMissionsFor" app/src/main/java/com/sol/lifeos/MainActivity.kt
           grep -q "savePausedTimer" app/src/main/java/com/sol/lifeos/MainActivity.kt
+          grep -q "class MissionAlarmReceiver" app/src/main/java/com/sol/lifeos/AlarmScheduling.kt
 
       - name: Compilar APK de debug
         run: gradle --no-daemon --stacktrace assembleDebug
 
-      - name: Disponibilizar fonte revisado
+      - name: Disponibilizar fonte v2.2
         uses: actions/upload-artifact@v4
         with:
-          name: life-os-v2.1-source
-          path: app/src/main/java/com/sol/lifeos/MainActivity.kt
-          retention-days: 7
+          name: life-os-v2.2-source
+          path: |
+            app/src/main/java/com/sol/lifeos/MainActivity.kt
+            app/src/main/java/com/sol/lifeos/AlarmScheduling.kt
+          retention-days: 30
 
-      - name: Disponibilizar APK
+      - name: Disponibilizar APK v2.2
         uses: actions/upload-artifact@v4
         with:
-          name: life-os-v2.1-debug-apk
+          name: life-os-v2.2-debug-apk
           path: app/build/outputs/apk/debug/app-debug.apk
           if-no-files-found: error
           retention-days: 30
