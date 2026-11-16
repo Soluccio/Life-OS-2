@@ -28,6 +28,13 @@ jobs:
       - name: Preparar Android SDK
         uses: android-actions/setup-android@v4
 
+      # Mantém a assinatura de debug estável entre compilações futuras.
+      - name: Restaurar chave de assinatura de debug
+        uses: actions/cache@v4
+        with:
+          path: ~/.android/debug.keystore
+          key: life-os-debug-signing-v2
+
       - name: Instalar SDK 35 e Build Tools
         run: |
           yes | sdkmanager --licenses >/dev/null
@@ -38,25 +45,27 @@ jobs:
         with:
           gradle-version: '8.11.1'
 
-      - name: Descompactar o código Kotlin
+      - name: Descompactar e validar o código Kotlin
         run: |
           mkdir -p app/src/main/java/com/sol/lifeos
           gzip -dc app/src/main/java/com/sol/lifeos/MainActivity.kt.gz > app/src/main/java/com/sol/lifeos/MainActivity.kt
-
-      - name: Disponibilizar fonte para revisão
-        uses: actions/upload-artifact@v4
-        with:
-          name: life-os-source-review
-          path: app/src/main/java/com/sol/lifeos/MainActivity.kt
-          retention-days: 1
+          test -s app/src/main/java/com/sol/lifeos/MainActivity.kt
+          grep -q "class MainActivity" app/src/main/java/com/sol/lifeos/MainActivity.kt
 
       - name: Compilar APK de debug
         run: gradle --no-daemon --stacktrace assembleDebug
 
+      - name: Disponibilizar fonte revisado
+        uses: actions/upload-artifact@v4
+        with:
+          name: life-os-v2.1-source
+          path: app/src/main/java/com/sol/lifeos/MainActivity.kt
+          retention-days: 7
+
       - name: Disponibilizar APK
         uses: actions/upload-artifact@v4
         with:
-          name: life-os-debug-apk
+          name: life-os-v2.1-debug-apk
           path: app/build/outputs/apk/debug/app-debug.apk
           if-no-files-found: error
-          retention-days: 14
+          retention-days: 30

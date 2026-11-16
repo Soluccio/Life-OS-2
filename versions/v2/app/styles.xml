@@ -1,0 +1,12 @@
+<resources>
+    <style name="Theme.LifeOS" parent="android:style/Theme.Material.NoActionBar">
+        <item name="android:fontFamily">sans</item>
+        <item name="android:windowLightStatusBar">false</item>
+        <item name="android:statusBarColor">#002A32</item>
+        <item name="android:navigationBarColor">#001E24</item>
+        <item name="android:windowActionModeOverlay">true</item>
+        <item name="android:windowLightNavigationBar">false</item>
+        <item name="android:windowDrawsSystemBarBackgrounds">true</item>
+        <item name="android:colorAccent">#ED254E</item>
+    </style>
+</resources>
