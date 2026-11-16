@@ -1,0 +1,29 @@
+LIFE OS 2 — ANDROID NATIVO
+
+Este projeto usa Kotlin + Jetpack Compose, sem WebView e sem necessidade de internet dentro do aplicativo.
+
+COMPILAÇÃO AUTOMÁTICA
+1. Faça push dos arquivos para a branch main.
+2. Abra a aba Actions do repositório.
+3. Selecione "Build Life OS APK".
+4. Abra a execução mais recente.
+5. Ao terminar com sucesso, baixe o artifact "life-os-debug-apk".
+6. Extraia o ZIP do artifact, transfira app-debug.apk para o Android e instale.
+
+O workflow descompacta MainActivity.kt.gz durante o build. O arquivo fonte fica compactado no repositório apenas para tornar o envio pelo GitHub mais leve.
+
+RECURSOS
+- Painel de jogador, nível e XP.
+- Ritual de chegada e modos Dia Ruim/Dia Péssimo.
+- Missões semanais, calendário e histórico.
+- Conquistas.
+- Skills de lavanderia e calistenia.
+- Recompensas personalizadas.
+- Temporizador de foco.
+- Meta progressiva de sono.
+
+DADOS
+O progresso fica em SharedPreferences no armazenamento privado do app e permanece no aparelho. Não há sincronização em nuvem.
+
+OBSERVAÇÃO
+O APK de debug é apropriado para instalar e testar, mas não é uma versão assinada para publicação na Play Store.
