@@ -1,17 +1,18 @@
 # Life OS — Android nativo
 
-Aplicativo Android nativo em Kotlin + Jetpack Compose, sem WebView.
+Aplicativo Android nativo em Kotlin + Jetpack Compose.
 
-## Linha de versões
-- `versions/v2.0/`: snapshot histórico da primeira versão nativa.
-- `versions/v2.1/`: snapshot da primeira revisão visual.
-- `versions/v2.2/`: versão atual com dashboard compacto, nova identidade, tarefas personalizadas e lembretes sonoros.
+## Versões
+- `versions/v2.0/`: primeira versão nativa.
+- `versions/v2.1/`: revisão visual inicial.
+- `versions/v2.2/`: tarefas personalizadas, lembretes e base visual anterior.
+- `versions/v2.2.1/`: correção de atualização instantânea das missões e revisão visual compacta.
 
-## Life OS v2.2
-Paleta `#002A32` / `#ED254E`, interface híbrida e compacta, tipografia mais legível, ícone de compasso redesenhado, estados de sobrevivência, progressão visual e animações discretas. Inclui calendário, histórico, conquistas, habilidades, recompensas, timer, tarefas recorrentes e lembretes do Android.
+## v2.2.1
+- Atualização reativa da tela ao marcar/desmarcar missões, sem reiniciar a tela ou perder a posição de rolagem.
+- Interface mais escura e minimalista, com teal discreto e coral reservado a ações/destaques.
+- Dashboard compacto, progresso mais claro e cartões/listas com menos ruído visual.
+- Preserva tarefas recorrentes, lembretes Android, conquistas, skills, recompensas, histórico e temporizador.
 
 ## Gerar APK
-Push em `main` ou `v2.2-staging` inicia **Build Life OS APK**. O workflow reconstrói o fonte Kotlin a partir de `versions/v2.2/payload-b64/`, compila o APK e publica o artifact `life-os-v2.2-debug-apk`.
-
-## Dados e alarmes
-O progresso fica no armazenamento privado do aplicativo. Os lembretes são notificações Android com som de alarme; dependem da permissão de notificações, do som/canal de notificações do dispositivo e das permissões de alarmes exatos. Sem alarmes exatos, o Android pode adiar um lembrete.
+Push em `main` inicia o workflow **Build Life OS APK**. O GitHub Actions recompõe o projeto e publica os artefatos APK e fonte.

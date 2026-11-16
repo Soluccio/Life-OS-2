@@ -6,13 +6,14 @@ on:
     branches:
       - main
       - v2.2-staging
+      - v2.2.1-staging
 
 permissions:
   contents: read
 
 jobs:
   build:
-    name: Compile Android APK v2.2
+    name: Compile Android APK v2.2.1
     runs-on: ubuntu-latest
     timeout-minutes: 40
 
@@ -45,37 +46,42 @@ jobs:
         with:
           gradle-version: '8.11.1'
 
-      - name: Reconstruir fonte Kotlin v2.2
+      - name: Reconstruir e aplicar correções Kotlin v2.2.1
         shell: bash
         run: |
           set -euo pipefail
-          mkdir -p /tmp/life-os-v2.2
-          cat versions/v2.2/payload-b64/part-*.b64 | tr -d '\r\n ' | base64 --decode > /tmp/life-os-v2.2/source-bundle.zip
+          mkdir -p /tmp/life-os-v2.2.1
+          cat versions/v2.2/payload-b64/part-*.b64 | tr -d '\r\n ' | base64 --decode > /tmp/life-os-v2.2.1/source-bundle.zip
           unzip -t /tmp/life-os-v2.2/source-bundle.zip
           unzip -o /tmp/life-os-v2.2/source-bundle.zip -d .
           gzip -dc app/src/main/java/com/sol/lifeos/MainActivity.kt.gz > app/src/main/java/com/sol/lifeos/MainActivity.kt
+          base64 -d versions/v2.2.1/apply_v221_patch.py.gz.b64 | gzip -dc > /tmp/apply_v221_patch.py
+          python3 /tmp/apply_v221_patch.py
           test -s app/src/main/java/com/sol/lifeos/MainActivity.kt
           test -s app/src/main/java/com/sol/lifeos/AlarmScheduling.kt
           grep -q "customMissionsFor" app/src/main/java/com/sol/lifeos/MainActivity.kt
           grep -q "savePausedTimer" app/src/main/java/com/sol/lifeos/MainActivity.kt
           grep -q "class MissionAlarmReceiver" app/src/main/java/com/sol/lifeos/AlarmScheduling.kt
+          grep -q "if (revisionToken >= 0)" app/src/main/java/com/sol/lifeos/MainActivity.kt
+          grep -q "animateContentSize" app/src/main/java/com/sol/lifeos/MainActivity.kt
+          grep -q "versionName = \"2.2.1\"" app/build.gradle.kts
 
       - name: Compilar APK de debug
         run: gradle --no-daemon --stacktrace assembleDebug
 
-      - name: Disponibilizar fonte v2.2
+      - name: Disponibilizar fonte v2.2.1
         uses: actions/upload-artifact@v4
         with:
-          name: life-os-v2.2-source
+          name: life-os-v2.2.1-source
           path: |
             app/src/main/java/com/sol/lifeos/MainActivity.kt
             app/src/main/java/com/sol/lifeos/AlarmScheduling.kt
           retention-days: 30
 
-      - name: Disponibilizar APK v2.2
+      - name: Disponibilizar APK v2.2.1
         uses: actions/upload-artifact@v4
         with:
-          name: life-os-v2.2-debug-apk
+          name: life-os-v2.2.1-debug-apk
           path: app/build/outputs/apk/debug/app-debug.apk
           if-no-files-found: error
           retention-days: 30
