@@ -52,8 +52,8 @@ jobs:
           set -euo pipefail
           mkdir -p /tmp/life-os-v2.2.1
           cat versions/v2.2/payload-b64/part-*.b64 | tr -d '\r\n ' | base64 --decode > /tmp/life-os-v2.2.1/source-bundle.zip
-          unzip -t /tmp/life-os-v2.2/source-bundle.zip
-          unzip -o /tmp/life-os-v2.2/source-bundle.zip -d .
+          unzip -t /tmp/life-os-v2.2.1/source-bundle.zip
+          unzip -o /tmp/life-os-v2.2.1/source-bundle.zip -d .
           gzip -dc app/src/main/java/com/sol/lifeos/MainActivity.kt.gz > app/src/main/java/com/sol/lifeos/MainActivity.kt
           base64 -d versions/v2.2.1/apply_v221_patch.py.gz.b64 | gzip -dc > /tmp/apply_v221_patch.py
           python3 /tmp/apply_v221_patch.py
